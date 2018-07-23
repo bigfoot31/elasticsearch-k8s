@@ -1,0 +1,41 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: kibana-deploy
+  labels:
+    k8s-app: kibana
+    task: log-monitoring
+spec:
+  minReadySeconds: 0
+  progressDeadlineSeconds: 150
+  replicas: 1
+  selector:
+    matchLabels:
+      k8s-app: kibana
+      task: log-monitoring
+  template:
+    metadata:
+      name: kibana-pod-template
+      labels:
+        k8s-app: kibana
+        task: log-monitoring
+    spec:
+      containers:
+      - image: 131.131.131.201:5000/kibana/kibana:6.3.1
+        imagePullPolicy: IfNotPresent
+        name: kibana-container
+        ports:
+        - containerPort: 5601
+          hostPort: 5601
+          protocol: TCP
+        volumeMounts:
+        - mountPath: /usr/share/kibana/config/kibana.yml
+          subPath: kibana.yml
+          name: config
+      volumes:
+      - name: config
+        configMap:
+          name: kibana
+          items:
+          - key: kibana.yml
+            path: kibana.yml

@@ -1,0 +1,18 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: logstash-svc
+  labels:
+    k8s-app: logstash
+    task: log-monitoring
+spec:
+  ports:
+  - name: logstash-svc-port
+    port: 5044
+    protocol: TCP
+    targetPort: 5044
+  selector:
+    k8s-app: logstash
+    task: log-monitoring
+  type: ClusterIP
+

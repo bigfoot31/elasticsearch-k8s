@@ -1,0 +1,32 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: elasticsearch-deploy
+  labels:
+    k8s-app: elasticsearch
+    task: log-monitoring
+spec:
+  minReadySeconds: 0
+  progressDeadlineSeconds: 150
+  replicas: 1
+  selector:
+    matchLabels:
+      k8s-app: elasticsearch
+      task: log-monitoring
+  template:
+    metadata:
+      name: elasticsearch-pod-template
+      labels:
+        k8s-app: elasticsearch
+        task: log-monitoring
+    spec:
+      containers:
+      - image: 131.131.131.201:5000/elasticsearch/elasticsearch:6.3.1
+        imagePullPolicy: IfNotPresent
+        name: elasticsearch-container
+        ports:
+        - containerPort: 9200
+          hostPort: 9200
+          protocol: TCP
+      nodeSelector:
+        vmmax: ok
