@@ -1,0 +1,54 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata: 
+  labels: 
+    app: k8s-myapp
+    type: back-end
+  name: controller-deploy
+spec:
+  replicas: 3
+  selector: 
+    matchLabels: 
+      app: k8s-myapp
+      type: back-end
+  template: 
+    metadata: 
+      labels: 
+        app: k8s-myapp
+        type: back-end
+      name: controller-pod-template
+    spec: 
+      containers: 
+      - image: 131.131.131.201:5000/hotscan/controller/mqinterface
+        name: hotscan-controller-mqinterface
+        imagePullPolicy: IfNotPresent
+        volumeMounts:
+        - mountPath: /home/hotscan/TODAY/LOGS/
+          name: exchange
+        - mountPath: /home/hotscan/bin/OCS.INI
+          subPath: OCS.INI
+          name: ocs
+      - image: 131.131.131.201:5000/beats/filebeat:6.3.1
+        imagePullPolicy: IfNotPresent
+        name: filebeat-container
+        volumeMounts:
+        - mountPath: /usr/share/filebeat/filebeat.yml
+          subPath: filebeat.yml
+          name: config
+        - mountPath: /usr/share/filebeat/logs/
+          name: exchange
+      volumes:
+      - name: exchange
+        emptyDir: {}
+      - name: config
+        configMap:
+          name: filebeat
+          items:
+          - key: filebeat.yml
+            path: filebeat.yml
+      - name: ocs
+        configMap:
+          name: ocs
+          items:
+          - key: OCS.INI
+            path: OCS.INI
