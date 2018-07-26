@@ -19,9 +19,11 @@ spec:
       name: controller-pod-template
     spec: 
       containers: 
-      - image: 131.131.131.201:5000/hotscan/controller/mqinterface
+      - image: 131.131.131.201:5000/hotscan/controller/mqinterface:v8.5.0
         name: hotscan-controller-mqinterface
         imagePullPolicy: IfNotPresent
+        command: ["/bin/bash","-c"]
+        args: ["./entrypoint.sh"]
         volumeMounts:
         - mountPath: /home/hotscan/TODAY/LOGS/
           name: exchange
@@ -31,6 +33,11 @@ spec:
       - image: 131.131.131.201:5000/beats/filebeat:6.3.1
         imagePullPolicy: IfNotPresent
         name: filebeat-container
+        env:
+        - name: NODE_NAME
+          valueFrom:
+            fieldRef:
+              fieldPath: spec.nodeName
         volumeMounts:
         - mountPath: /usr/share/filebeat/filebeat.yml
           subPath: filebeat.yml

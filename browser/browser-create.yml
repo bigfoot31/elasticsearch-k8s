@@ -1,7 +1,6 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  namespace: default
   labels:
     k8s-app: browser
     type: front-end
@@ -20,21 +19,20 @@ spec:
       name: browser-pod
     spec:
       containers:
-      - image: 131.131.131.201:5000/hotscan/browser:v8.3.1
-        name: browser-container
+      - image: 131.131.131.201:5000/hotscan/browser:v8.5.0
+        name: browser-deploy
+        imagePullPolicy: Always
+        volumeMounts:
+        - mountPath: /apache-tomcat-7.0.88/bin/logs/
+          name: exchange
+      - image: 131.131.131.201:5000/beats/filebeat:6.3.1
         imagePullPolicy: IfNotPresent
+        name: browser-filebeat-container
         env:
         - name: NODE_NAME
           valueFrom:
             fieldRef:
               fieldPath: spec.nodeName
-        volumeMounts:
-        - mountPath: /HotScan.log
-          subPath: HotScan.log
-          name: exchange
-      - image: 131.131.131.201:5000/beats/filebeat:6.3.1
-        imagePullPolicy: IfNotPresent
-        name: browser-filebeat-container
         volumeMounts:
         - mountPath: /usr/share/filebeat/filebeat.yml
           subPath: filebeat.yml
@@ -57,7 +55,9 @@ apiVersion: v1
 kind: Service
 metadata:
   name: browser-service
-  namespace: hotscan
+  labels:
+    k8s-app: browser
+    type: front-end
 spec:
   type: NodePort
   ports:

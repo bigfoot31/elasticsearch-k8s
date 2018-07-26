@@ -37,3 +37,23 @@ spec:
             path: /home/ansible/elasticsearch-do-not-delete/
       nodeSelector:
         vmmax: ok
+---
+
+apiVersion: v1
+kind: Service
+metadata:
+  name: elasticsearch-svc
+  labels:
+    k8s-app: elasticsearch
+    task: log-monitoring
+spec:
+  ports:
+  - name: elasticsearch-svc-port
+    port: 9200
+    protocol: TCP
+    targetPort: 9200
+  selector:
+    k8s-app: elasticsearch
+    task: log-monitoring
+  type: ClusterIP
+
