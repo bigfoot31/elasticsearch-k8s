@@ -28,6 +28,9 @@ spec:
         - containerPort: 5044
           hostPort: 5044
           protocol: TCP
+        - containerPort: 5043
+          hostPort: 5043
+          protocol: TCP
         volumeMounts:
         - mountPath: /usr/share/logstash/config/logstash.yml
           subPath: logstash.yml
@@ -47,3 +50,28 @@ spec:
           items:
           - key: logstash.conf
             path: logstash.conf
+
+---
+
+apiVersion: v1
+kind: Service
+metadata:
+  name: logstash-svc
+  labels:
+    k8s-app: logstash
+    task: log-monitoring
+spec:
+  ports:
+  - name: logstash-svc-port-controller
+    port: 5044
+    protocol: TCP
+    targetPort: 5044
+  - name: logstash-svc-port-browser
+    port: 5043
+    protocol: TCP
+    targetPort: 5043
+  selector:
+    k8s-app: logstash
+    task: log-monitoring
+  type: ClusterIP
+

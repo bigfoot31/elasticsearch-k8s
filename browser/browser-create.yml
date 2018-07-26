@@ -1,0 +1,70 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  namespace: default
+  labels:
+    k8s-app: browser
+    type: front-end
+  name: browser-deploy
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      k8s-app: browser
+      type: front-end
+  template:
+    metadata:
+      labels:
+        k8s-app: browser
+        type: front-end
+      name: browser-pod
+    spec:
+      containers:
+      - image: 131.131.131.201:5000/hotscan/browser:v8.3.1
+        name: browser-container
+        imagePullPolicy: IfNotPresent
+        env:
+        - name: NODE_NAME
+          valueFrom:
+            fieldRef:
+              fieldPath: spec.nodeName
+        volumeMounts:
+        - mountPath: /HotScan.log
+          subPath: HotScan.log
+          name: exchange
+      - image: 131.131.131.201:5000/beats/filebeat:6.3.1
+        imagePullPolicy: IfNotPresent
+        name: browser-filebeat-container
+        volumeMounts:
+        - mountPath: /usr/share/filebeat/filebeat.yml
+          subPath: filebeat.yml
+          name: config
+        - mountPath: /usr/share/filebeat/logs/
+          name: exchange
+      volumes:
+      - name: exchange
+        emptyDir: {}
+      - name: config
+        configMap:
+          name: filebeat
+          items:
+          - key: filebeat-browser.yml
+            path: filebeat.yml
+
+---
+
+apiVersion: v1
+kind: Service
+metadata:
+  name: browser-service
+  namespace: hotscan
+spec:
+  type: NodePort
+  ports:
+  - targetPort: 8080
+    port: 80
+    nodePort: 30080
+  selector:
+    k8s-app: browser
+    type: front-end
+

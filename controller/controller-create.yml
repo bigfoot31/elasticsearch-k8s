@@ -44,7 +44,7 @@ spec:
         configMap:
           name: filebeat
           items:
-          - key: filebeat.yml
+          - key: filebeat-controller.yml
             path: filebeat.yml
       - name: ocs
         configMap:
