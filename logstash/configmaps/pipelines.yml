@@ -1,0 +1,4 @@
+- pipeline.id: browser
+  path.config: "/usr/share/logstash/pipeline/browser.conf"
+- pipeline.id: controller
+  path.config: "/usr/share/logstash/pipeline/controller.conf"
