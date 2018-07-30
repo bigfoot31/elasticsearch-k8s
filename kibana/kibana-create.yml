@@ -5,6 +5,7 @@ metadata:
   labels:
     k8s-app: kibana
     task: log-monitoring
+  namespace: elkstack
 spec:
   minReadySeconds: 0
   progressDeadlineSeconds: 150
@@ -19,6 +20,7 @@ spec:
       labels:
         k8s-app: kibana
         task: log-monitoring
+      namespace: elkstack
     spec:
       containers:
       - image: 131.131.131.201:5000/kibana/kibana:6.3.1
@@ -49,6 +51,7 @@ metadata:
   labels:
     k8s-app: kibana
     task: log-monitoring
+  namespace: elkstack
 spec:
   ports:
   - name: kibana-svc-port
