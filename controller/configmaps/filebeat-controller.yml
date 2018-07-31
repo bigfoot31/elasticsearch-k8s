@@ -10,4 +10,4 @@ filebeat:
 
 output:
   logstash:
-    hosts: "logstash-svc.elkstack.svc.cluster.local:5044"
+    hosts: "${NODE_IP}:5044"

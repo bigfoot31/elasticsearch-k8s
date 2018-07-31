@@ -1,15 +1,13 @@
 apiVersion: apps/v1
-kind: Deployment
+kind: DaemonSet
 metadata:
-  name: logstash-deploy
+  name: logstash-daemon
   labels:
     k8s-app: logstash
     task: log-monitoring
   namespace: elkstack
 spec:
   minReadySeconds: 0
-  progressDeadlineSeconds: 150
-  replicas: 1
   selector:
     matchLabels:
       k8s-app: logstash
