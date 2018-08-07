@@ -1,0 +1,104 @@
+
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: elasticsearch-data-stateful
+  namespace: elkstack
+  labels:
+    app: elasticsearch
+    role: elasticsearch-data
+spec:
+  replicas: 2
+  serviceName: elasticsearch-data-svc
+  selector:
+    matchLabels:
+      app: elasticsearch
+      role: elasticsearch-data
+  template:
+    metadata:
+      namespace: elkstack
+      labels:
+        app: elasticsearch
+        role: elasticsearch-data
+    spec:
+      initContainers:
+      - name: elasticsearch-data-initcontainer
+        image: 131.131.131.201:5000/busybox:1.27.2
+        imagePullPolicy: IfNotPresent
+        securityContext:
+          privileged: true
+        command:
+        - sysctl
+        - -w
+        - vm.max_map_count=262144
+        resources:
+          limits:
+            cpu: 0.01m
+            memory: 25Mi
+          requests:
+            cpu: 0.005m
+            memory: 10Mi
+      containers:
+      - name: elasticsearch-data-container
+        securityContext:
+          privileged: false
+        image: 131.131.131.201:5000/elasticsearch/elasticsearch:6.3.1
+        imagePullPolicy: IfNotPresent
+        ports:
+        - containerPort: 9200
+          hostPort: 9200
+          protocol: TCP
+        readinessProbe:
+          httpGet:
+            path: /_cluster/health
+            port: 9200
+          initialDelaySeconds: 20
+          timeoutSeconds: 5
+        volumeMounts:
+        - mountPath: /usr/share/elasticsearch/data
+          name: persistent
+        - mountPath: /usr/share/elasticsearch/config/elasticsearch.yml
+          subPath: elasticsearch.yml
+          name: config
+      volumes:
+      - name: persistent
+        hostPath:
+          path: /home/ansible/elasticsearch-do-not-delete/
+      - name: config
+        configMap:
+          name: elasticsearch
+          items:
+          - key: data
+            path: elasticsearch.yml
+      affinity:
+        podAntiAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+          - namespaces:
+            - elkstack
+            labelSelector:
+              matchLabels:
+                k8s-app: elasticsearch
+                task: log-monitoring
+                role: elasticsearch-data
+            topologyKey: kubernetes.io/hostname 
+
+---
+
+apiVersion: v1
+kind: Service
+metadata:
+  name: elasticsearch-data-svc
+  namespace: elkstack
+  labels:
+    app: elasticsearch
+    role: elasticsearch-data
+spec:
+  selector:
+    app: elasticsearch
+    role: elasticsearch-data
+  ports:
+  - name: http
+    port: 9200
+    targetPort: 9200
+    protocol: TCP
+  type: ClusterIP

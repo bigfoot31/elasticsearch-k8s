@@ -1,0 +1,92 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: elasticsearch-deploy
+  namespace: elkstack
+  labels:
+    k8s-app: elasticsearch
+    role: elasticsearch-master
+    task: log-monitoring
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      k8s-app: elasticsearch
+      role: elasticsearch-master
+      task: log-monitoring
+  template:
+    metadata:
+      name: elasticsearch-pod-template
+      labels:
+        k8s-app: elasticsearch
+        task: log-monitoring
+        role: elasticsearch-master
+      namespace: elkstack
+    spec:
+      initContainers:
+      - name: elasticsearch-master-initcontainer
+        image: 131.131.131.201:5000/busybox:1.27.2
+        command:
+        - sysctl
+        - -w
+        - vm.max_map_count=262144
+        securityContext:
+          privileged: true
+      containers:
+      - image: 131.131.131.201:5000/elasticsearch/elasticsearch:6.3.1
+        imagePullPolicy: IfNotPresent
+        name: elasticsearch-master-container
+        ports:
+        - containerPort: 9300
+          hostPort: 9300
+          protocol: TCP
+        readinessProbe:
+          tcpSocket:
+            port: 9300
+          initialDelaySeconds: 20
+          periodSeconds: 10
+        volumeMounts:
+        - mountPath: /usr/share/elasticsearch/config/elasticsearch.yml
+          subPath: elasticsearch.yml
+          name: config
+      volumes:
+      - name: config
+        configMap:
+          name: elasticsearch
+          items:
+          - key: master
+            path: elasticsearch.yml
+      affinity:
+        podAntiAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+          - namespaces:
+            - elkstack
+            labelSelector:
+              matchLabels:
+                k8s-app: elasticsearch
+                task: log-monitoring
+                role: elasticsearch-master
+            topologyKey: kubernetes.io/hostname 
+
+---
+
+apiVersion: v1
+kind: Service
+metadata:
+  name: elasticsearch-master-svc
+  namespace: elkstack
+  labels:
+    k8s-app: elasticsearch
+    task: log-monitoring
+    role: elasticsearch-master
+spec:
+  selector:
+    k8s-app: elasticsearch
+    task: log-monitoring
+    role: elasticsearch-master
+  ports:
+  - name: transport
+    port: 9300
+    targetPort: 9300
+    protocol: TCP
+  clusterIP: None

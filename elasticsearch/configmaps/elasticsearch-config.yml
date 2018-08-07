@@ -1,0 +1,36 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: elasticsearch
+  namespace: elkstack
+data: 
+  master: |
+    cluster.name: k8s-elasticsearch-cluster
+    discovery.zen:
+      minimum_master_nodes: 2
+      ping.unicast.hosts: elasticsearch-master-svc.elkstack.svc.cluster.local:9300
+    network.host: _eth0_
+    node:
+      master: true
+      data: false
+      ingest: false
+      ml: false
+    xpack.security.enabled: false
+    xpack.monitoring.enabled: false
+    xpack.graph.enabled: false
+    xpack.watcher.enabled: false
+  data: |
+    cluster.name: k8s-elasticsearch-cluster
+    discovery.zen:
+      minimum_master_nodes: 2
+      ping.unicast.hosts: elasticsearch-master-svc.elkstack.svc.cluster.local:9300
+    network.host: 0.0.0.0
+    node:
+      master: false
+      data: true
+      ingest: true
+      ml: false
+    xpack.security.enabled: false
+    xpack.monitoring.enabled: false
+    xpack.graph.enabled: false
+    xpack.watcher.enabled: false

@@ -6,6 +6,8 @@ metadata:
     type: front-end
   name: browser-deploy
   namespace: hotscan
+  annotations:
+    kubernetes.io/change-cause: "Hotscan Active-Active release:v9.0.0"
 spec:
   replicas: 1
   strategy: 
@@ -41,7 +43,7 @@ spec:
           httpGet:
             path: HotScan
             port: 8080
-          initialDelaySeconds: 30
+          initialDelaySeconds: 40
           periodSeconds: 10
           successThreshold: 1
           failureThreshold: 3
@@ -71,11 +73,10 @@ spec:
         emptyDir: {}
       - name: config
         configMap:
-          name: filebeat
+          name: browser
           items:
-          - key: filebeat-browser.yml
+          - key: filebeat-browser
             path: filebeat.yml
-      nodeName: node1
 
 ---
 
