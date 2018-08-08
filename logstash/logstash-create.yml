@@ -61,3 +61,29 @@ spec:
             path: browser.conf
           - key: controller.conf
             path: controller.conf
+
+---
+
+apiVersion: v1
+kind: Service
+metadata:
+  name: logstash-svc
+  labels:
+    k8s-app: logstash
+    task: log-monitoring
+  namespace: elkstack
+spec:
+  ports:
+  - name: logstash-svc-port-controller
+    port: 5044
+    protocol: TCP
+    targetPort: 5044
+  - name: logstash-svc-port-browser
+    port: 5043
+    protocol: TCP
+    targetPort: 5043
+  selector:
+    k8s-app: logstash
+    task: log-monitoring
+  type: ClusterIP
+
