@@ -1,0 +1,14 @@
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: elasticsearch-persistent-volume
+spec:
+  capacity:
+    storage: 1Gi 
+  accessModes:
+    - ReadWriteMany 
+  persistentVolumeReclaimPolicy: Retain 
+  nfs: 
+    path: /home/ansible/elk-data-files-test
+    server: 131.131.131.201
+    readOnly: false

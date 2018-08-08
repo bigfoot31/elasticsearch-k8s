@@ -5,8 +5,9 @@ metadata:
     app: k8s-myapp
     type: back-end
   name: controller-deploy
+  namespace: hotscan
 spec:
-  replicas: 3
+  replicas: 1
   selector: 
     matchLabels: 
       app: k8s-myapp
@@ -17,11 +18,27 @@ spec:
         app: k8s-myapp
         type: back-end
       name: controller-pod-template
+      namespace: hotscan
     spec: 
       containers: 
-      - image: 131.131.131.201:5000/hotscan/controller/mqinterface
+      - image: 131.131.131.201:5000/hotscan/controller/mqinterface:v8.5.0
         name: hotscan-controller-mqinterface
         imagePullPolicy: IfNotPresent
+        command: ["/bin/bash","-c"]
+        args: ["./entrypoint.sh"]
+        resources:
+          requests:
+            cpu: 250m
+        readinessProbe:
+          exec:
+            command:
+            - grep 
+            - "Loaded dictionary"
+            - /home/hotscan/TODAY/LOGS/Al1.log
+          initialDelaySeconds: 40
+          periodSeconds: 15
+          successThreshold: 1
+          failureThreshold: 3
         volumeMounts:
         - mountPath: /home/hotscan/TODAY/LOGS/
           name: exchange
@@ -31,6 +48,18 @@ spec:
       - image: 131.131.131.201:5000/beats/filebeat:6.3.1
         imagePullPolicy: IfNotPresent
         name: filebeat-container
+        resources:
+          requests:
+            cpu: 250m
+        env:
+        - name: NODE_IP
+          valueFrom:
+            fieldRef:
+              fieldPath: status.hostIP
+        - name: NODE_NAME
+          valueFrom:
+            fieldRef:
+              fieldPath: spec.nodeName
         volumeMounts:
         - mountPath: /usr/share/filebeat/filebeat.yml
           subPath: filebeat.yml
@@ -42,13 +71,13 @@ spec:
         emptyDir: {}
       - name: config
         configMap:
-          name: filebeat
+          name: controller
           items:
-          - key: filebeat-controller.yml
+          - key: filebeat-controller
             path: filebeat.yml
       - name: ocs
         configMap:
-          name: ocs
+          name: controller
           items:
-          - key: OCS.INI
+          - key: ocs
             path: OCS.INI

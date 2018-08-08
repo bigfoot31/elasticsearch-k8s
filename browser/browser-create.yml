@@ -1,13 +1,20 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  namespace: default
   labels:
     k8s-app: browser
     type: front-end
   name: browser-deploy
+  namespace: hotscan
+  annotations:
+    kubernetes.io/change-cause: "Hotscan Active-Active release:v9.0.0"
 spec:
   replicas: 1
+  strategy: 
+    type: RollingUpdate
+    rollingUpdate:
+      maxSurge: 1
+      maxUnavailable: 0
   selector:
     matchLabels:
       k8s-app: browser
@@ -18,23 +25,43 @@ spec:
         k8s-app: browser
         type: front-end
       name: browser-pod
+      namespace: hotscan
     spec:
       containers:
-      - image: 131.131.131.201:5000/hotscan/browser:v8.3.1
-        name: browser-container
-        imagePullPolicy: IfNotPresent
-        env:
-        - name: NODE_NAME
-          valueFrom:
-            fieldRef:
-              fieldPath: spec.nodeName
+      - image: 131.131.131.201:5000/hotscan/browser:v8.5.0
+        name: browser-deploy
+        imagePullPolicy: Always
+        readinessProbe:
+          httpGet:
+            path: HotScan
+            port: 8080
+          initialDelaySeconds: 30
+          periodSeconds: 10
+          successThreshold: 1
+          failureThreshold: 3
+        livenessProbe:
+          httpGet:
+            path: HotScan
+            port: 8080
+          initialDelaySeconds: 40
+          periodSeconds: 10
+          successThreshold: 1
+          failureThreshold: 3
         volumeMounts:
-        - mountPath: /HotScan.log
-          subPath: HotScan.log
+        - mountPath: /apache-tomcat-7.0.88/bin/logs/
           name: exchange
       - image: 131.131.131.201:5000/beats/filebeat:6.3.1
         imagePullPolicy: IfNotPresent
         name: browser-filebeat-container
+        env:
+        - name: NODE_IP
+          valueFrom:
+            fieldRef:
+              fieldPath: status.hostIP
+        - name: NODE_NAME
+          valueFrom:
+            fieldRef:
+              fieldPath: spec.nodeName
         volumeMounts:
         - mountPath: /usr/share/filebeat/filebeat.yml
           subPath: filebeat.yml
@@ -46,9 +73,9 @@ spec:
         emptyDir: {}
       - name: config
         configMap:
-          name: filebeat
+          name: browser
           items:
-          - key: filebeat-browser.yml
+          - key: filebeat-browser
             path: filebeat.yml
 
 ---
@@ -57,6 +84,9 @@ apiVersion: v1
 kind: Service
 metadata:
   name: browser-service
+  labels:
+    k8s-app: browser
+    type: front-end
   namespace: hotscan
 spec:
   type: NodePort

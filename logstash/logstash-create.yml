@@ -1,14 +1,13 @@
 apiVersion: apps/v1
-kind: Deployment
+kind: DaemonSet
 metadata:
-  name: logstash-deploy
+  name: logstash-daemon
   labels:
     k8s-app: logstash
     task: log-monitoring
+  namespace: elkstack
 spec:
   minReadySeconds: 0
-  progressDeadlineSeconds: 150
-  replicas: 1
   selector:
     matchLabels:
       k8s-app: logstash
@@ -19,6 +18,7 @@ spec:
       labels:
         k8s-app: logstash
         task: log-monitoring
+      namespace: elkstack
     spec:
       containers:
       - image: 131.131.131.201:5000/logstash/logstash:6.3.1
@@ -35,8 +35,11 @@ spec:
         - mountPath: /usr/share/logstash/config/logstash.yml
           subPath: logstash.yml
           name: config
+        - mountPath: /usr/share/logstash/config/pipelines.yml
+          subPath: pipelines.yml
+          name: pipeline-config
         - mountPath: /usr/share/logstash/pipeline
-          name: pipeline
+          name: pipelines
       volumes:
       - name: config
         configMap:
@@ -44,34 +47,17 @@ spec:
           items:
           - key: logstash.yml
             path: logstash.yml
-      - name: pipeline
+      - name: pipeline-config
         configMap:
           name: logstash
           items:
-          - key: logstash.conf
-            path: logstash.conf
-
----
-
-apiVersion: v1
-kind: Service
-metadata:
-  name: logstash-svc
-  labels:
-    k8s-app: logstash
-    task: log-monitoring
-spec:
-  ports:
-  - name: logstash-svc-port-controller
-    port: 5044
-    protocol: TCP
-    targetPort: 5044
-  - name: logstash-svc-port-browser
-    port: 5043
-    protocol: TCP
-    targetPort: 5043
-  selector:
-    k8s-app: logstash
-    task: log-monitoring
-  type: ClusterIP
-
+          - key: pipelines.yml
+            path: pipelines.yml
+      - name: pipelines
+        configMap:
+          name: logstash
+          items:
+          - key: browser.conf
+            path: browser.conf
+          - key: controller.conf
+            path: controller.conf
